@@ -1,0 +1,5 @@
+deploy-cloudflare/
+nivas-os-cloudflare-pages.zip
+supabase-setup.sql
+.git/
+*.log

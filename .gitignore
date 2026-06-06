@@ -1,0 +1,6 @@
+deploy-cloudflare/
+nivas-os-cloudflare-pages.zip
+.vercel/
+.env
+.env.*
+*.log

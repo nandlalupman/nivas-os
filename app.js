@@ -704,11 +704,15 @@ async function initLeafletMap() {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(activeMap);
 
+    const selectedListing = new URLSearchParams(window.location.search).get("listing");
+    let selectedMarker = null;
     const propertyGroup = L.layerGroup(
-      getProperties().map((property) =>
-        L.marker([property.lat, property.lng])
-          .bindPopup(`<strong>${property.title}</strong><br>${property.price}<br>${property.area}, ${property.city}`)
-      )
+      getProperties().map((property) => {
+        const marker = L.marker([property.lat, property.lng])
+          .bindPopup(`<strong>${property.title}</strong><br>${property.price}<br>${property.area}, ${property.city}`);
+        if (property.id === selectedListing) selectedMarker = marker;
+        return marker;
+      })
     );
     activeLayerGroups.Properties = propertyGroup.addTo(activeMap);
 
@@ -755,6 +759,10 @@ async function initLeafletMap() {
     });
 
     if (loading) loading.remove();
+    if (selectedMarker) {
+      activeMap.setView(selectedMarker.getLatLng(), 16);
+      selectedMarker.openPopup();
+    }
     setTimeout(() => activeMap.invalidateSize(), 100);
   } catch (error) {
     if (loading) loading.textContent = error.message;
@@ -769,6 +777,82 @@ function toggleMapLayer(button) {
     group.addTo(activeMap);
   } else {
     activeMap.removeLayer(group);
+  }
+}
+
+async function initListingMapPicker() {
+  const container = document.querySelector("#listing-map-picker");
+  const form = document.querySelector("[data-listing-form]");
+  if (!container || !form) return;
+
+  const latInput = form.elements.lat;
+  const lngInput = form.elements.lng;
+  const cityInput = form.elements.city;
+  const areaInput = form.elements.area;
+  const localityInput = form.elements.locality;
+  const loading = document.querySelector("#listing-map-loading");
+
+  const readPosition = () => [
+    Number(latInput.value || 12.9698),
+    Number(lngInput.value || 77.7499),
+  ];
+
+  try {
+    const L = await ensureLeaflet();
+    if (!document.querySelector("#listing-map-picker")) return;
+
+    const listingMap = L.map("listing-map-picker", {
+      zoomControl: true,
+      scrollWheelZoom: true,
+    }).setView(readPosition(), 15);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(listingMap);
+
+    const marker = L.marker(readPosition(), { draggable: true })
+      .addTo(listingMap)
+      .bindPopup("Selected listing location");
+
+    const syncPosition = (lat, lng, shouldMoveMap = true) => {
+      const fixedLat = Number(lat).toFixed(6);
+      const fixedLng = Number(lng).toFixed(6);
+      latInput.value = fixedLat;
+      lngInput.value = fixedLng;
+      marker.setLatLng([Number(fixedLat), Number(fixedLng)]);
+      if (shouldMoveMap) listingMap.setView([Number(fixedLat), Number(fixedLng)], Math.max(listingMap.getZoom(), 15));
+    };
+
+    listingMap.on("click", (event) => {
+      syncPosition(event.latlng.lat, event.latlng.lng, false);
+    });
+
+    marker.on("dragend", () => {
+      const position = marker.getLatLng();
+      syncPosition(position.lat, position.lng, false);
+    });
+
+    [latInput, lngInput].forEach((input) => {
+      input.addEventListener("change", () => {
+        const [lat, lng] = readPosition();
+        syncPosition(lat, lng);
+      });
+    });
+
+    form.querySelectorAll("[data-location-preset]").forEach((button) => {
+      button.addEventListener("click", () => {
+        cityInput.value = button.dataset.city || cityInput.value;
+        areaInput.value = button.dataset.area || areaInput.value;
+        localityInput.value = button.dataset.locality || localityInput.value;
+        syncPosition(button.dataset.lat, button.dataset.lng);
+      });
+    });
+
+    if (loading) loading.remove();
+    setTimeout(() => listingMap.invalidateSize(), 100);
+  } catch (error) {
+    if (loading) loading.textContent = error.message;
   }
 }
 
@@ -905,6 +989,23 @@ function listPropertyPage() {
           <label>Latitude<input name="lat" type="number" step="0.000001" value="12.9698" required /></label>
           <label>Longitude<input name="lng" type="number" step="0.000001" value="77.7499" required /></label>
         </div>
+        <div class="listing-map-card">
+          <div>
+            <p class="eyebrow">Map Location</p>
+            <h3>Select exact land or property pin</h3>
+            <p>Click on the free OpenStreetMap preview or drag the pin. The selected coordinates are saved with the listing and appear on the discovery map.</p>
+          </div>
+          <div class="location-presets" aria-label="Quick location presets">
+            <button type="button" data-location-preset data-city="Bengaluru" data-area="Whitefield" data-locality="Kadugodi" data-lat="12.9698" data-lng="77.7499">Whitefield</button>
+            <button type="button" data-location-preset data-city="Gurugram" data-area="Golf Course Extension" data-locality="Sector 67" data-lat="28.3984" data-lng="77.0551">Gurugram</button>
+            <button type="button" data-location-preset data-city="Pune" data-area="Hinjewadi" data-locality="Phase 2" data-lat="18.5913" data-lng="73.7389">Pune</button>
+          </div>
+          <div class="listing-map-shell">
+            <div id="listing-map-picker" class="listing-map-picker" aria-label="Select listing location on map"></div>
+            <div class="map-loading" id="listing-map-loading">Loading free map picker...</div>
+          </div>
+          <p class="map-helper">For jameen listings, place the pin on the plot gate, road edge, or nearest verified boundary point.</p>
+        </div>
         <label>Hierarchy<input name="hierarchy" value="India / Karnataka / Bengaluru / East / Whitefield / Kadugodi / Society / Project / Tower / Unit" required /></label>
         <label>Amenities<textarea name="amenities">Clubhouse, pool, security, EV parking</textarea></label>
         <label>Property image<input name="image_file" type="file" accept="image/*" /></label>
@@ -989,6 +1090,9 @@ function renderRoute() {
   app.focus({ preventScroll: true });
   if (current === "/map") {
     initLeafletMap();
+  }
+  if (current === "/list-property") {
+    initListingMapPicker();
   }
 }
 
@@ -1125,7 +1229,7 @@ document.addEventListener("submit", async (event) => {
     if (listingForm) {
       const id = await saveListing(listingForm);
       showToast("Listing saved to Supabase.");
-      navigate(`/property/aster-park/`);
+      navigate(`/map/?listing=${encodeURIComponent(id)}`);
       return id;
     }
 

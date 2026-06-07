@@ -1665,6 +1665,68 @@ details p {
   z-index: 1;
 }
 
+.listing-map-card {
+  display: grid;
+  gap: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.82);
+  padding: 1rem;
+  box-shadow: 0 18px 42px rgba(27, 30, 37, 0.07);
+}
+
+.listing-map-card h3,
+.listing-map-card p {
+  margin: 0;
+}
+
+.listing-map-card p {
+  color: var(--muted);
+}
+
+.location-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.location-presets button {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  padding: 0.6rem 0.85rem;
+  font-weight: 850;
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.location-presets button:hover,
+.location-presets button:focus-visible {
+  border-color: rgba(23, 23, 23, 0.24);
+  box-shadow: 0 10px 24px rgba(27, 30, 37, 0.1);
+  transform: translateY(-1px);
+}
+
+.listing-map-shell {
+  position: relative;
+  min-height: 24rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #e9eee8;
+}
+
+.listing-map-picker {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.map-helper {
+  font-size: 0.92rem;
+}
+
 .map-loading {
   position: absolute;
   inset: 1rem;

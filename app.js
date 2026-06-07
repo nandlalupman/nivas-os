@@ -1014,6 +1014,18 @@ function listPropertyPage() {
       <div class="panel">
         <h3>What this saves</h3>
         <p>The listing is inserted into Supabase with your user id as owner. It appears on Search and Map after the table policies are set up.</p>
+        <div class="source-note">
+          <strong>Real inventory sources</strong>
+          <span>Use owner submissions, builder sheets, broker CSVs, land dealer inventory, PG operator lists, and verified field survey data. Avoid copying listings from other marketplaces without permission.</span>
+        </div>
+        <form class="os-form compact-import" data-bulk-import-form>
+          <h3>Bulk import real listings</h3>
+          <p>Paste CSV rows for flats, PGs, plots, jameen, villas, shops, offices, or builder units. Imported rows appear on Search and Map with a pending verification label.</p>
+          <label>CSV inventory<textarea name="csv" data-import-csv rows="9">title,category,city,area,locality,type,price,budget,size,bedrooms,possession,lat,lng,amenities
+Real PG near metro,pg,Bengaluru,Whitefield,Kadugodi,PG / Co-living,INR 12000 monthly,0,Single sharing,0,Available now,12.970800,77.751300,"Food, wifi, security"
+Residential plot near highway,plot,Pune,Hinjewadi,Phase 2,Residential Plot,INR 42 Lakh,42,1200 sq ft,0,Immediate,18.591300,73.738900,"Road access, gated boundary"</textarea></label>
+          <button class="button ghost" type="submit">Import CSV to Supabase</button>
+        </form>
       </div>
     </section>
   `;
@@ -1110,6 +1122,110 @@ function slugify(value) {
     .slice(0, 64);
 }
 
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let quoted = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    const next = text[index + 1];
+
+    if (char === '"' && quoted && next === '"') {
+      cell += '"';
+      index += 1;
+    } else if (char === '"') {
+      quoted = !quoted;
+    } else if (char === "," && !quoted) {
+      row.push(cell.trim());
+      cell = "";
+    } else if ((char === "\n" || char === "\r") && !quoted) {
+      if (char === "\r" && next === "\n") index += 1;
+      row.push(cell.trim());
+      if (row.some(Boolean)) rows.push(row);
+      row = [];
+      cell = "";
+    } else {
+      cell += char;
+    }
+  }
+
+  row.push(cell.trim());
+  if (row.some(Boolean)) rows.push(row);
+  if (rows.length < 2) return [];
+
+  const headers = rows[0].map((header) => slugify(header).replace(/-/g, "_"));
+  return rows.slice(1).map((values) =>
+    headers.reduce((item, header, index) => {
+      item[header] = values[index] || "";
+      return item;
+    }, {})
+  );
+}
+
+function normalizeInventoryKind(row) {
+  const raw = `${row.category || ""} ${row.type || ""} ${row.listing_kind || ""}`.toLowerCase();
+  if (raw.includes("plot") || raw.includes("land") || raw.includes("jameen") || raw.includes("agricultural")) {
+    return "land";
+  }
+  return "property";
+}
+
+function normalizeLandType(row) {
+  const raw = `${row.category || ""} ${row.type || ""} ${row.land_type || ""}`.toLowerCase();
+  if (raw.includes("agricultural") || raw.includes("farm")) return "agricultural";
+  if (raw.includes("industrial")) return "industrial";
+  if (raw.includes("commercial") || raw.includes("shop") || raw.includes("office")) return "commercial";
+  if (raw.includes("plot") || raw.includes("land") || raw.includes("jameen")) return "residential";
+  return null;
+}
+
+function normalizeImportedListing(row, index) {
+  const title = row.title || row.name || `Imported listing ${index + 1}`;
+  const listingKind = normalizeInventoryKind(row);
+  const lat = Number(row.lat || row.latitude);
+  const lng = Number(row.lng || row.longitude);
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    throw new Error(`Row ${index + 2}: lat/lng missing or invalid.`);
+  }
+
+  return {
+    id: `${slugify(title)}-${Date.now()}-${index}`,
+    owner_id: currentUser.id,
+    listing_kind: listingKind,
+    land_type: listingKind === "land" ? normalizeLandType(row) : null,
+    status: "published",
+    title,
+    city: row.city || "Unknown city",
+    area: row.area || row.zone || "Unknown area",
+    locality: row.locality || row.location || row.area || "Unknown locality",
+    hierarchy: row.hierarchy || `India / ${row.city || "Unknown city"} / ${row.area || "Unknown area"} / ${row.locality || row.location || "Unknown locality"}`,
+    type: row.type || row.category || (listingKind === "land" ? "Land / Plot" : "Property"),
+    price: row.price || row.rent || "Price on request",
+    budget: Number(row.budget || row.budget_numeric || row.price_numeric || 0),
+    size: row.size || row.area_size || "",
+    bedrooms: Number(row.bedrooms || row.bhk || 0),
+    possession: row.possession || row.availability || "To be verified",
+    verification: "Real inventory import - pending verification",
+    owner_type: currentProfile?.role || "owner",
+    score: 64,
+    trust: 52,
+    builder: 0,
+    area_score: 60,
+    investment: listingKind === "land" ? 66 : 58,
+    risk: 42,
+    yield: row.yield || (String(row.category || row.type || "").toLowerCase().includes("pg") ? "Rental income" : "To be verified"),
+    growth: row.growth || "To be verified",
+    commute: row.commute || "To be verified",
+    amenities: [row.amenities, row.source ? `Source: ${row.source}` : "", row.contact ? `Contact: ${row.contact}` : ""].filter(Boolean).join(" | "),
+    image: "linear-gradient(135deg, #f6f1e8, #8aa6a3 46%, #263238)",
+    lat,
+    lng,
+  };
+}
+
 async function upsertProfileFromForm(form, userId) {
   const client = await getSupabaseClient();
   const payload = Object.fromEntries(new FormData(form).entries());
@@ -1183,14 +1299,27 @@ async function saveListing(form) {
   return id;
 }
 
+async function importBulkListings(form) {
+  if (!currentUser) throw new Error("Login required.");
+  const client = await getSupabaseClient();
+  const rows = parseCsv(new FormData(form).get("csv") || "");
+  if (!rows.length) throw new Error("CSV needs a header row and at least one listing row.");
+  const payload = rows.map((row, index) => normalizeImportedListing(row, index));
+  const { error } = await client.from("properties").insert(payload);
+  if (error) throw error;
+  await loadSupabaseProperties();
+  return payload.length;
+}
+
 document.addEventListener("submit", async (event) => {
   const authForm = event.target.closest("[data-auth-form]");
   const profileForm = event.target.closest("[data-profile-form]");
   const listingForm = event.target.closest("[data-listing-form]");
+  const bulkImportForm = event.target.closest("[data-bulk-import-form]");
   const visitForm = event.target.closest("[data-visit-form]");
   const dealForm = event.target.closest("[data-deal-form]");
 
-  if (!authForm && !profileForm && !listingForm && !visitForm && !dealForm) return;
+  if (!authForm && !profileForm && !listingForm && !bulkImportForm && !visitForm && !dealForm) return;
   event.preventDefault();
 
   try {
@@ -1231,6 +1360,13 @@ document.addEventListener("submit", async (event) => {
       showToast("Listing saved to Supabase.");
       navigate(`/map/?listing=${encodeURIComponent(id)}`);
       return id;
+    }
+
+    if (bulkImportForm) {
+      const count = await importBulkListings(bulkImportForm);
+      showToast(`${count} real inventory listings imported.`);
+      navigate("/map/");
+      return count;
     }
 
     if (visitForm) {

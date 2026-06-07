@@ -1527,6 +1527,42 @@ details p {
   color: var(--muted);
 }
 
+.source-note {
+  display: grid;
+  gap: 0.35rem;
+  margin: 1rem 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(246, 244, 239, 0.8);
+  padding: 0.85rem;
+}
+
+.source-note span,
+.compact-import p {
+  color: var(--muted);
+}
+
+.compact-import {
+  margin-top: 1rem;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.compact-import h3,
+.compact-import p {
+  margin: 0;
+}
+
+.compact-import textarea {
+  min-height: 15rem;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  white-space: pre;
+}
+
 .metric-grid strong,
 .score-grid strong {
   display: block;

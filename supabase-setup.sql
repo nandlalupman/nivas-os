@@ -74,6 +74,21 @@ create table if not exists public.localities (
   created_at timestamptz default now()
 );
 
+create table if not exists public.developer_signals (
+  id text primary key,
+  name text not null,
+  developer_type text,
+  focus text,
+  cities text,
+  confidence int,
+  verification text,
+  risk text,
+  website text,
+  lat double precision,
+  lng double precision,
+  created_at timestamptz default now()
+);
+
 create table if not exists public.site_visits (
   id uuid primary key default gen_random_uuid(),
   property_id text references public.properties(id) on delete cascade,
@@ -125,6 +140,7 @@ create table if not exists public.chat_messages (
 
 alter table public.properties enable row level security;
 alter table public.localities enable row level security;
+alter table public.developer_signals enable row level security;
 alter table public.site_visits enable row level security;
 alter table public.deals enable row level security;
 alter table public.documents enable row level security;
@@ -173,6 +189,12 @@ with check (owner_id = auth.uid());
 drop policy if exists "Public can read localities" on public.localities;
 create policy "Public can read localities"
 on public.localities for select
+to anon, authenticated
+using (true);
+
+drop policy if exists "Public can read developer signals" on public.developer_signals;
+create policy "Public can read developer signals"
+on public.developer_signals for select
 to anon, authenticated
 using (true);
 
@@ -654,5 +676,29 @@ on conflict (id) do update set
   investment_score = excluded.investment_score,
   future_growth_score = excluded.future_growth_score,
   sentiment = excluded.sentiment,
+  lat = excluded.lat,
+  lng = excluded.lng;
+
+insert into public.developer_signals (
+  id, name, developer_type, focus, cities, confidence, verification, risk, website, lat, lng
+) values
+  ('dlf', 'DLF', 'Listed national developer', 'Premium residential, commercial, plotted and mixed-use development', 'Gurugram, Delhi NCR, Chennai, Panchkula and other markets', 88, 'Official-source lead', 'Verify project-specific approvals, RERA, possession and payment account', 'https://www.dlf.in/', 28.4797, 77.0884),
+  ('lodha', 'Lodha', 'Listed national developer', 'Premium residential townships, apartments and urban developments', 'Mumbai MMR, Pune, Bengaluru and other markets', 84, 'Official-source lead', 'Verify project brochure, approvals, delivery timeline and payment terms', 'https://www.lodhagroup.com/', 19.076, 72.8777),
+  ('godrej-properties', 'Godrej Properties', 'Listed national developer', 'Residential apartments, plotted developments and city projects', 'Mumbai, Pune, Bengaluru, NCR and other markets', 84, 'Official-source lead', 'Verify current inventory, tower approvals, carpet area and possession', 'https://www.godrejproperties.com/', 19.076, 72.8777),
+  ('prestige', 'Prestige Group', 'National developer', 'Residential, office, retail, hospitality and integrated developments', 'Bengaluru, Hyderabad, Chennai, Mumbai, NCR and more', 82, 'Public-source lead', 'Use official project contacts before paying any broker or pre-launch amount', 'https://www.prestigeconstructions.com/', 12.9716, 77.5946),
+  ('sobha', 'Sobha', 'National developer', 'Residential apartments, villas and plotted communities', 'Bengaluru, Gurugram, Pune, Chennai and other markets', 80, 'Public-source lead', 'Verify unit availability, sale agreement, OC/CC and maintenance terms', 'https://www.sobha.com/', 12.9716, 77.5946),
+  ('brigade', 'Brigade Group', 'National developer', 'Residential, commercial, retail and hospitality assets', 'Bengaluru, Chennai, Hyderabad, Mysuru and other markets', 79, 'Public-source lead', 'Verify project phase, handover date, approvals and builder account', 'https://www.brigadegroup.com/', 12.9716, 77.5946),
+  ('m3m', 'M3M India', 'NCR developer', 'Luxury residential, retail and commercial projects', 'Gurugram and NCR', 76, 'Public-source lead', 'Verify licensing, project account, possession and broker authorization', 'https://www.m3mindia.com/', 28.4595, 77.0266),
+  ('signature-global', 'Signature Global', 'NCR developer', 'Affordable and mid-income housing, floors and projects', 'Gurugram and NCR', 76, 'Public-source lead', 'Verify draw/allotment terms, unit carpet area and charges', 'https://www.signatureglobal.in/', 28.4595, 77.0266),
+  ('amaira-group', 'Amaira Group Vrindavan', 'Local developer / dealer signal', 'Vrindavan builder floors, apartments, plots and interiors signals', 'Vrindavan, Mathura', 64, 'Verification pending', 'Verify legal title, exact office, project documents, RERA applicability and payment account', '', 27.5752, 77.6726)
+on conflict (id) do update set
+  name = excluded.name,
+  developer_type = excluded.developer_type,
+  focus = excluded.focus,
+  cities = excluded.cities,
+  confidence = excluded.confidence,
+  verification = excluded.verification,
+  risk = excluded.risk,
+  website = excluded.website,
   lat = excluded.lat,
   lng = excluded.lng;

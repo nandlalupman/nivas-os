@@ -685,6 +685,126 @@ const knownMapPlaces = [
   },
 ];
 
+const developerSignals = [
+  {
+    id: "dlf",
+    name: "DLF",
+    type: "Listed national developer",
+    focus: "Premium residential, commercial, plotted and mixed-use development",
+    cities: "Gurugram, Delhi NCR, Chennai, Panchkula and other markets",
+    confidence: 88,
+    verification: "Official-source lead",
+    risk: "Verify project-specific approvals, RERA, possession and payment account",
+    website: "https://www.dlf.in/",
+    lat: 28.4797,
+    lng: 77.0884,
+  },
+  {
+    id: "lodha",
+    name: "Lodha",
+    type: "Listed national developer",
+    focus: "Premium residential townships, apartments and urban developments",
+    cities: "Mumbai MMR, Pune, Bengaluru and other markets",
+    confidence: 84,
+    verification: "Official-source lead",
+    risk: "Verify project brochure, approvals, delivery timeline and payment terms",
+    website: "https://www.lodhagroup.com/",
+    lat: 19.076,
+    lng: 72.8777,
+  },
+  {
+    id: "godrej-properties",
+    name: "Godrej Properties",
+    type: "Listed national developer",
+    focus: "Residential apartments, plotted developments and city projects",
+    cities: "Mumbai, Pune, Bengaluru, NCR and other markets",
+    confidence: 84,
+    verification: "Official-source lead",
+    risk: "Verify current inventory, tower approvals, carpet area and possession",
+    website: "https://www.godrejproperties.com/",
+    lat: 19.076,
+    lng: 72.8777,
+  },
+  {
+    id: "prestige",
+    name: "Prestige Group",
+    type: "National developer",
+    focus: "Residential, office, retail, hospitality and integrated developments",
+    cities: "Bengaluru, Hyderabad, Chennai, Mumbai, NCR and more",
+    confidence: 82,
+    verification: "Public-source lead",
+    risk: "Use official project contacts before paying any broker or pre-launch amount",
+    website: "https://www.prestigeconstructions.com/",
+    lat: 12.9716,
+    lng: 77.5946,
+  },
+  {
+    id: "sobha",
+    name: "Sobha",
+    type: "National developer",
+    focus: "Residential apartments, villas and plotted communities",
+    cities: "Bengaluru, Gurugram, Pune, Chennai and other markets",
+    confidence: 80,
+    verification: "Public-source lead",
+    risk: "Verify unit availability, sale agreement, OC/CC and maintenance terms",
+    website: "https://www.sobha.com/",
+    lat: 12.9716,
+    lng: 77.5946,
+  },
+  {
+    id: "brigade",
+    name: "Brigade Group",
+    type: "National developer",
+    focus: "Residential, commercial, retail and hospitality assets",
+    cities: "Bengaluru, Chennai, Hyderabad, Mysuru and other markets",
+    confidence: 79,
+    verification: "Public-source lead",
+    risk: "Verify project phase, handover date, approvals and builder account",
+    website: "https://www.brigadegroup.com/",
+    lat: 12.9716,
+    lng: 77.5946,
+  },
+  {
+    id: "m3m",
+    name: "M3M India",
+    type: "NCR developer",
+    focus: "Luxury residential, retail and commercial projects",
+    cities: "Gurugram and NCR",
+    confidence: 76,
+    verification: "Public-source lead",
+    risk: "Verify licensing, project account, possession and broker authorization",
+    website: "https://www.m3mindia.com/",
+    lat: 28.4595,
+    lng: 77.0266,
+  },
+  {
+    id: "signature-global",
+    name: "Signature Global",
+    type: "NCR developer",
+    focus: "Affordable and mid-income housing, floors and projects",
+    cities: "Gurugram and NCR",
+    confidence: 76,
+    verification: "Public-source lead",
+    risk: "Verify draw/allotment terms, unit carpet area and charges",
+    website: "https://www.signatureglobal.in/",
+    lat: 28.4595,
+    lng: 77.0266,
+  },
+  {
+    id: "amaira-group",
+    name: "Amaira Group Vrindavan",
+    type: "Local developer / dealer signal",
+    focus: "Vrindavan builder floors, apartments, plots and interiors signals",
+    cities: "Vrindavan, Mathura",
+    confidence: 64,
+    verification: "Verification pending",
+    risk: "Verify legal title, exact office, project documents, RERA applicability and payment account",
+    website: "",
+    lat: 27.5752,
+    lng: 77.6726,
+  },
+];
+
 let leafletLoadPromise;
 let activeMap;
 let activeLayerGroups = {};
@@ -832,6 +952,32 @@ function propertyCards(list = getProperties()) {
     .join("")}</div>`;
 }
 
+function developerCards(list = developerSignals) {
+  return `<div class="developer-grid">${list
+    .map(
+      (developer) => `
+        <article class="developer-card">
+          <div>
+            <span>${escapeHtml(developer.verification)}</span>
+            <strong>${escapeHtml(developer.name)}</strong>
+            <p>${escapeHtml(developer.type)} | ${escapeHtml(developer.cities)}</p>
+          </div>
+          <div class="mini-score">
+            <span>Confidence ${escapeHtml(developer.confidence)}</span>
+            <span>${escapeHtml(developer.focus)}</span>
+          </div>
+          <p>${escapeHtml(developer.risk)}</p>
+          <div class="card-actions">
+            <a class="button small" href="/search/?q=${encodeURIComponent(developer.name)}" data-link>Search</a>
+            <a class="button small ghost" href="/map/?q=${encodeURIComponent(developer.name)}" data-link>Map</a>
+            ${developer.website ? `<a class="button small ghost" href="${developer.website}" target="_blank" rel="noreferrer">Source</a>` : ""}
+          </div>
+        </article>
+      `
+    )
+    .join("")}</div>`;
+}
+
 function hierarchyView() {
   return `
     <section class="section">
@@ -929,7 +1075,7 @@ function searchFormHtml() {
         <p>Builder/project name, city, area, jameen, plot, PG, flat, budget, or verification signal type karo. Results live update honge.</p>
       </div>
       <div class="search-preset-row">
-        ${["Amaira Group Vrindavan", "Amaira Kridha", "Vrindavan builder floor", "Vrindavan jameen", "Mathura PG", "Bharatpur land", "Bharatpur flat"]
+        ${["Amaira Group Vrindavan", "DLF", "Godrej Properties", "Prestige Group", "Lodha", "Sobha", "Brigade Group", "Vrindavan builder floor", "Vrindavan jameen", "Mathura PG", "Bharatpur land"]
           .map((item) => `<button type="button" data-search-preset="${escapeHtml(item)}">${escapeHtml(item)}</button>`)
           .join("")}
       </div>
@@ -980,6 +1126,11 @@ function searchPage() {
       </div>
       <div class="search-summary" data-search-summary>Showing ${inventory.length} inventory item(s), including Amaira/Vrindavan, Mathura, Bharatpur, Bengaluru, Mumbai, and Gurugram starter data.</div>
       <div data-search-results>${propertyCards(inventory)}</div>
+      <div class="section-heading compact-heading">
+        <p class="eyebrow">Developer Data Lake</p>
+        <h2>Large builders and local real-estate signals for discovery, not blind trust.</h2>
+      </div>
+      <div data-developer-results>${developerCards()}</div>
     </section>
   `;
 }
@@ -1165,7 +1316,19 @@ function findMapMatches(query) {
       place,
     }));
 
-  return [...propertyMatches, ...placeMatches].slice(0, 8);
+  const developerMatches = developerSignals
+    .filter((developer) => `${developer.name} ${developer.type} ${developer.focus} ${developer.cities} ${developer.verification}`.toLowerCase().includes(normalized))
+    .map((developer) => ({
+      id: `developer-${developer.id}`,
+      title: developer.name,
+      subtitle: `${developer.type} | ${developer.cities}`,
+      kind: "Developer data lake",
+      lat: developer.lat,
+      lng: developer.lng,
+      developer,
+    }));
+
+  return [...propertyMatches, ...developerMatches, ...placeMatches].slice(0, 10);
 }
 
 function createPropertyMarker(property) {
@@ -1218,6 +1381,15 @@ function focusMapMatch(match) {
       `${match.property.type} | ${match.property.price}`,
       `${match.property.area}, ${match.property.city}`,
       `Trust ${match.property.trust}/100, investment ${match.property.investment}/100, status: listed inventory.`,
+    ]);
+    return;
+  }
+  if (match.developer) {
+    renderMapInsights(match.developer.name, [
+      `${match.developer.type} | confidence ${match.developer.confidence}/100`,
+      match.developer.focus,
+      `Markets: ${match.developer.cities}`,
+      `Action: ${match.developer.risk}`,
     ]);
     return;
   }
@@ -1355,13 +1527,19 @@ function bindMapTools() {
 function updateSearchResults(form) {
   const results = filterPropertiesFromForm(form);
   const target = document.querySelector("[data-search-results]");
+  const developerTarget = document.querySelector("[data-developer-results]");
   const summary = document.querySelector("[data-search-summary]");
+  const query = String(new FormData(form).get("q") || "").trim().toLowerCase();
+  const developers = query
+    ? developerSignals.filter((developer) => `${developer.name} ${developer.type} ${developer.focus} ${developer.cities} ${developer.verification}`.toLowerCase().includes(query))
+    : developerSignals;
   if (target) target.innerHTML = propertyCards(results);
+  if (developerTarget) developerTarget.innerHTML = developerCards(developers);
   if (summary) {
-    const query = new FormData(form).get("q") || "all inventory";
-    summary.textContent = results.length
-      ? `Showing ${results.length} result(s) for ${query}.`
-      : `No listing found for ${query}. Try map search or import owner/broker/builder inventory.`;
+    const label = new FormData(form).get("q") || "all inventory";
+    summary.textContent = results.length || developers.length
+      ? `Showing ${results.length} listing result(s) and ${developers.length} developer signal(s) for ${label}.`
+      : `No listing found for ${label}. Try map search or import owner/broker/builder inventory.`;
   }
   return results;
 }
@@ -1770,11 +1948,38 @@ Residential plot near highway,plot,Pune,Hinjewadi,Phase 2,Residential Plot,INR 4
 function rolePage(role) {
   const data = roleData[role];
   const ecosystemLabel = role === "brokers" ? "Broker Ecosystem" : role === "builders" ? "Builder Ecosystem" : "Role-Based Experience";
+  const adminExtras =
+    role === "admin"
+      ? `
+        <div class="section-heading compact-heading"><p class="eyebrow">Verification Queue</p><h2>High-risk inventory and data-lake leads needing action.</h2></div>
+        <div class="verification-grid">
+          ${getProperties()
+            .filter((property) => Number(property.trust) < 70 || String(property.verification).toLowerCase().includes("pending") || String(property.verification).toLowerCase().includes("data lake"))
+            .slice(0, 8)
+            .map((property) => `<article><strong>${escapeHtml(property.title)}</strong><span>${escapeHtml(property.city)} / Trust ${escapeHtml(property.trust)}</span><p>${escapeHtml(property.verification)}. Check owner, documents, price, duplicate photos, map pin and payment account.</p></article>`)
+            .join("")}
+          ${developerSignals
+            .filter((developer) => developer.confidence < 80)
+            .slice(0, 6)
+            .map((developer) => `<article><strong>${escapeHtml(developer.name)}</strong><span>${escapeHtml(developer.type)} / Confidence ${escapeHtml(developer.confidence)}</span><p>${escapeHtml(developer.risk)}</p></article>`)
+            .join("")}
+        </div>
+      `
+      : "";
+  const builderExtras =
+    role === "builders"
+      ? `
+        <div class="section-heading compact-heading"><p class="eyebrow">Builder Directory</p><h2>Developer signals and reputation checks.</h2></div>
+        ${developerCards(developerSignals.slice(0, 8))}
+      `
+      : "";
   return `
     ${page(data.title, ecosystemLabel, "Dedicated operating workflow with clean analytics, action queues, documents, communication, and conversion guidance.", `<a class="button" href="/deals/" data-link>Open deals</a>`)}
     <section class="section">
       ${metricGrid(data.metrics)}
       <div class="module-grid">${data.flows.map((flow) => `<article class="module-card"><strong>${flow}</strong><span>Operational workspace</span></article>`).join("")}</div>
+      ${builderExtras}
+      ${adminExtras}
     </section>
   `;
 }

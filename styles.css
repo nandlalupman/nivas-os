@@ -1467,6 +1467,8 @@ details p {
 .metric-grid,
 .score-grid,
 .filter-grid,
+.developer-grid,
+.verification-grid,
 .board-grid,
 .checklist-grid {
   display: grid;
@@ -1475,6 +1477,14 @@ details p {
 
 .module-grid {
   grid-template-columns: repeat(4, 1fr);
+}
+
+.developer-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.verification-grid {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .module-grid.two {
@@ -1576,6 +1586,8 @@ details p {
 }
 
 .module-card,
+.developer-card,
+.verification-grid article,
 .metric-grid article,
 .score-grid article,
 .board-grid article,
@@ -1593,14 +1605,38 @@ details p {
   gap: 0.45rem;
 }
 
+.developer-card,
+.verification-grid article {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.developer-card span,
+.verification-grid span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.developer-card strong {
+  display: block;
+  font-size: 1.2rem;
+}
+
 .module-card span,
 .metric-grid span,
 .score-grid p,
 .board-grid p,
 .checklist-grid p,
 .panel p,
+.developer-card p,
+.verification-grid p,
 .filter-grid label {
   color: var(--muted);
+}
+
+.compact-heading {
+  margin-top: 2rem;
 }
 
 .source-note {
@@ -2245,6 +2281,8 @@ details p {
 @media (max-width: 1100px) {
   .module-grid,
   .metric-grid,
+  .developer-grid,
+  .verification-grid,
   .filter-grid,
   .search-console {
     grid-template-columns: repeat(2, 1fr);
@@ -2274,6 +2312,8 @@ details p {
   .module-grid,
   .module-grid.two,
   .metric-grid,
+  .developer-grid,
+  .verification-grid,
   .score-grid,
   .filter-grid,
   .search-console,

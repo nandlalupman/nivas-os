@@ -1508,6 +1508,47 @@ details p {
   box-shadow: 0 14px 34px rgba(27, 30, 37, 0.06);
 }
 
+.search-guide {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.86);
+  padding: 1rem;
+  box-shadow: 0 14px 34px rgba(27, 30, 37, 0.06);
+}
+
+.search-guide h3,
+.search-guide p {
+  margin: 0;
+}
+
+.search-guide p {
+  color: var(--muted);
+}
+
+.search-preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.search-preset-row button {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  padding: 0.6rem 0.78rem;
+  font-weight: 850;
+}
+
+.search-preset-row button:hover,
+.search-preset-row button:focus-visible {
+  border-color: var(--line-strong);
+  box-shadow: 0 8px 20px rgba(27, 30, 37, 0.1);
+}
+
 .search-console label {
   display: grid;
   gap: 0.35rem;

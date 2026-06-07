@@ -234,6 +234,102 @@ const properties = [
     image: "linear-gradient(135deg, #f3ead8, #8ba888 46%, #415a4c)",
   },
   {
+    id: "amaira-group-vrindavan",
+    title: "Amaira Group Vrindavan",
+    state: "Uttar Pradesh",
+    listingKind: "property",
+    landType: "",
+    city: "Vrindavan",
+    area: "Sunrakh Road",
+    locality: "Behind Prem Mandir",
+    lat: 27.5752,
+    lng: 77.6726,
+    hierarchy: "India / Uttar Pradesh / Vrindavan / Sunrakh Road / Behind Prem Mandir / Amaira Group",
+    type: "Developer / Property Dealer",
+    price: "Price on request",
+    budget: 0,
+    size: "Builder floors, apartments, plots",
+    bedrooms: 0,
+    possession: "Consultation available",
+    verification: "Source Found - Verification Pending",
+    ownerType: "Developer",
+    score: 76,
+    trust: 64,
+    builder: 72,
+    areaScore: 78,
+    investment: 74,
+    risk: 38,
+    yield: "To be verified",
+    growth: "High spiritual-city demand",
+    commute: "Sunrakh Road, Prem Mandir belt",
+    amenities: "Real estate, construction, interiors, builder floors, apartments, plots; verify current inventory and documents before deal",
+    image: "linear-gradient(135deg, #f7efe2, #ac9670 45%, #3c4652)",
+  },
+  {
+    id: "amaira-kridha-floors",
+    title: "Amaira Kridha Floors",
+    state: "Uttar Pradesh",
+    listingKind: "property",
+    landType: "",
+    city: "Vrindavan",
+    area: "Sunrakh Bangar",
+    locality: "Iskcon Temple Belt",
+    lat: 27.5728,
+    lng: 77.6754,
+    hierarchy: "India / Uttar Pradesh / Vrindavan / Sunrakh Bangar / Iskcon Temple Belt / Amaira Kridha Floors",
+    type: "2 BHK Builder Floor",
+    price: "Indicative INR 90 Lakh",
+    budget: 90,
+    size: "Approx 900 sq ft / 110 sq yd signals",
+    bedrooms: 2,
+    possession: "Possession signal 2025-2026",
+    verification: "Source Found - Verification Pending",
+    ownerType: "Builder",
+    score: 78,
+    trust: 66,
+    builder: 74,
+    areaScore: 78,
+    investment: 73,
+    risk: 40,
+    yield: "To be verified",
+    growth: "High pilgrimage housing demand",
+    commute: "Near Iskcon Temple and Sunrakh Bangar",
+    amenities: "Security, kids play area, vaastu, curated garden signals; verify brochure and legal documents",
+    image: "linear-gradient(135deg, #eee5d3, #b9987a 43%, #394657)",
+  },
+  {
+    id: "vrindavan-builder-floor-data-lake",
+    title: "Vrindavan Builder Floor Data Lake",
+    state: "Uttar Pradesh",
+    listingKind: "property",
+    landType: "",
+    city: "Vrindavan",
+    area: "Chaitanya Vihar",
+    locality: "Iskcon Temple Corridor",
+    lat: 27.5739,
+    lng: 77.6811,
+    hierarchy: "India / Uttar Pradesh / Vrindavan / Chaitanya Vihar / Iskcon Temple Corridor / Builder Floor Data Lake",
+    type: "Builder Floor / Apartment Lead",
+    price: "Indicative market signals",
+    budget: 0,
+    size: "2 BHK and 3 BHK signals",
+    bedrooms: 2,
+    possession: "Mixed inventory",
+    verification: "Data Lake - Needs Verification",
+    ownerType: "Market Signal",
+    score: 70,
+    trust: 48,
+    builder: 0,
+    areaScore: 76,
+    investment: 70,
+    risk: 52,
+    yield: "To be verified",
+    growth: "Temple corridor demand",
+    commute: "Chaitanya Vihar and Iskcon corridor",
+    amenities: "Use as discovery lead only; verify owner, RERA where applicable, registry chain, price, and possession",
+    image: "linear-gradient(135deg, #f4e9d7, #829a8b 45%, #353f4a)",
+  },
+  {
     id: "mathura-pg-dampier",
     title: "Mathura Dampier Nagar PG",
     state: "Uttar Pradesh",
@@ -593,6 +689,7 @@ let leafletLoadPromise;
 let activeMap;
 let activeLayerGroups = {};
 let activePropertyMarkers = new Map();
+let activeMapMatches = new Map();
 let mapDrawState = null;
 
 const legalItems = [
@@ -825,8 +922,20 @@ function filterPropertiesFromForm(form) {
 function searchFormHtml() {
   const inventory = getProperties();
   return `
+    <div class="search-guide">
+      <div>
+        <p class="eyebrow">Search Assistant</p>
+        <h3>Aapko kya search karna hai?</h3>
+        <p>Builder/project name, city, area, jameen, plot, PG, flat, budget, or verification signal type karo. Results live update honge.</p>
+      </div>
+      <div class="search-preset-row">
+        ${["Amaira Group Vrindavan", "Amaira Kridha", "Vrindavan builder floor", "Vrindavan jameen", "Mathura PG", "Bharatpur land", "Bharatpur flat"]
+          .map((item) => `<button type="button" data-search-preset="${escapeHtml(item)}">${escapeHtml(item)}</button>`)
+          .join("")}
+      </div>
+    </div>
     <form class="search-console" data-search-form>
-      <label>Search anything<input name="q" type="search" placeholder="Mathura plot, Vrindavan jameen, Bharatpur flat, PG, metro..." /></label>
+      <label>Search anything<input name="q" type="search" placeholder="Amaira Group Vrindavan, Mathura plot, Bharatpur flat, PG..." /></label>
       <label>State<select name="state">${optionList(inventory.map((property) => property.state), "All states")}</select></label>
       <label>City<select name="city">${optionList(inventory.map((property) => property.city), "All cities")}</select></label>
       <label>Inventory<select name="category">
@@ -869,7 +978,7 @@ function searchPage() {
           .map((item) => `<button type="button" data-search-chip="${item.toLowerCase()}">${item}</button>`)
           .join("")}
       </div>
-      <div class="search-summary" data-search-summary>Showing ${inventory.length} inventory item(s), including starter Mathura, Vrindavan, Bharatpur, Bengaluru, Mumbai, and Gurugram data.</div>
+      <div class="search-summary" data-search-summary>Showing ${inventory.length} inventory item(s), including Amaira/Vrindavan, Mathura, Bharatpur, Bengaluru, Mumbai, and Gurugram starter data.</div>
       <div data-search-results>${propertyCards(inventory)}</div>
     </section>
   `;
@@ -907,7 +1016,7 @@ function mapPage() {
       <div class="real-map-shell">
         <div class="map-command-center" aria-label="Map search and land tools">
           <form class="map-search-bar" data-map-search-form>
-            <input name="q" type="search" placeholder="Search jameen, plot, PG, flat, area, metro..." autocomplete="off" />
+            <input name="q" type="search" placeholder="Search Amaira, Vrindavan jameen, PG, flat, area..." autocomplete="off" />
             <button class="button small" type="submit">Search</button>
           </form>
           <div class="map-action-row">
@@ -918,7 +1027,7 @@ function mapPage() {
             <button type="button" data-map-finish hidden>Finish area</button>
             <button type="button" data-map-clear>Clear</button>
           </div>
-          <div class="map-search-results" data-map-results>Search any listed property, land, PG, flat, or locality. Use Draw area to inspect a jameen boundary.</div>
+          <div class="map-search-results" data-map-results>Search developer, listed property, land, PG, flat, or locality. Use Draw area to inspect a jameen boundary.</div>
         </div>
         <div id="leaflet-map" class="real-map" aria-label="Interactive property map"></div>
         <div class="map-loading" id="map-loading">Loading free OpenStreetMap map...</div>
@@ -1086,6 +1195,7 @@ function renderMapInsights(title, lines) {
 function renderMapResults(matches, query) {
   const results = document.querySelector("[data-map-results]");
   if (!results) return;
+  activeMapMatches = new Map(matches.map((match) => [match.id, match]));
   if (!matches.length) {
     results.innerHTML = `<strong>No exact listed match.</strong><span>Try city, area, plot, jameen, PG, flat, or draw the area on map for local intelligence.</span>`;
     renderMapInsights("No exact listed inventory", [`No listing matched "${query}". You can still inspect the area by drawing a boundary or using quick filters.`]);
@@ -1189,7 +1299,8 @@ function clearMapTools() {
   mapDrawState = null;
   document.querySelector("[data-map-finish]")?.setAttribute("hidden", "");
   const results = document.querySelector("[data-map-results]");
-  if (results) results.textContent = "Search any listed property, land, PG, flat, or locality. Use Draw area to inspect a jameen boundary.";
+  if (results) results.textContent = "Search developer, listed property, land, PG, flat, or locality. Use Draw area to inspect a jameen boundary.";
+  activeMapMatches = new Map();
   setPropertyLayer(getProperties());
   renderMapInsights("What are you checking?", ["Use search for listed inventory. Use draw mode for a land boundary, then check approximate area, nearby listings, and locality confidence signals."]);
 }
@@ -1208,8 +1319,7 @@ function bindMapTools() {
   results?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-map-result]");
     if (!button) return;
-    const query = new FormData(form).get("q") || "";
-    const match = findMapMatches(query).find((item) => item.id === button.dataset.mapResult);
+    const match = activeMapMatches.get(button.dataset.mapResult);
     focusMapMatch(match);
   });
 
@@ -1259,10 +1369,18 @@ function updateSearchResults(form) {
 function bindSearchTools() {
   const form = document.querySelector("[data-search-form]");
   if (!form) return;
+  const input = form.elements.q;
+  const urlQuery = new URLSearchParams(window.location.search).get("q");
+  if (urlQuery && input) input.value = urlQuery;
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     updateSearchResults(form);
+  });
+
+  form.querySelectorAll("input, select").forEach((control) => {
+    const eventName = control.tagName === "SELECT" ? "change" : "input";
+    control.addEventListener(eventName, () => updateSearchResults(form));
   });
 
   document.querySelector("[data-search-reset]")?.addEventListener("click", () => {
@@ -1274,6 +1392,13 @@ function bindSearchTools() {
     const values = Object.fromEntries(new FormData(form).entries());
     const query = values.q || values.city || values.state || values.category || "";
     navigate(`/map/?q=${encodeURIComponent(query)}`);
+  });
+
+  document.querySelectorAll("[data-search-preset]").forEach((button) => {
+    button.addEventListener("click", () => {
+      form.elements.q.value = button.dataset.searchPreset || "";
+      updateSearchResults(form);
+    });
   });
 
   document.querySelectorAll("[data-search-chip]").forEach((button) => {

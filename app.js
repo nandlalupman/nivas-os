@@ -373,9 +373,47 @@ const mapPois = {
   Highways: [["Old Madras Road", 13.0089, 77.7015]],
 };
 
+const knownMapPlaces = [
+  {
+    id: "whitefield-land",
+    title: "Whitefield jameen and plot belt",
+    type: "Area intelligence",
+    keywords: "whitefield kadugodi jameen plot land residential plot bangalore bengaluru",
+    city: "Bengaluru",
+    area: "Whitefield",
+    lat: 12.9698,
+    lng: 77.7499,
+    note: "Listed inventory plus locality signals around metro access, schools, hospitals, demand, traffic, and price heat.",
+  },
+  {
+    id: "gurugram-plot",
+    title: "Gurugram plot corridor",
+    type: "Area intelligence",
+    keywords: "gurugram gurgaon plot land jameen golf course extension sector 67",
+    city: "Gurugram",
+    area: "Golf Course Extension",
+    lat: 28.3984,
+    lng: 77.0551,
+    note: "Use this area lens for residential plots, builder floors, and future-growth checks.",
+  },
+  {
+    id: "pune-plot",
+    title: "Pune Hinjewadi plots and PG demand",
+    type: "Area intelligence",
+    keywords: "pune hinjewadi plot land pg flat rental phase 2",
+    city: "Pune",
+    area: "Hinjewadi",
+    lat: 18.5913,
+    lng: 73.7389,
+    note: "Strong rental-demand and employment-corridor lens for PG, flat, and plot discovery.",
+  },
+];
+
 let leafletLoadPromise;
 let activeMap;
 let activeLayerGroups = {};
+let activePropertyMarkers = new Map();
+let mapDrawState = null;
 
 const legalItems = [
   "Property Purchase Checklist",
@@ -632,10 +670,30 @@ function mapPage() {
     ${page("Full Screen Property Map", "Map Experience", "Map-based discovery with property, civic, risk, demand, and heatmap layers.", `<a class="button" href="/search/" data-link>Back to search</a>`)}
     <section class="map-page">
       <div class="real-map-shell">
+        <div class="map-command-center" aria-label="Map search and land tools">
+          <form class="map-search-bar" data-map-search-form>
+            <input name="q" type="search" placeholder="Search jameen, plot, PG, flat, area, metro..." autocomplete="off" />
+            <button class="button small" type="submit">Search</button>
+          </form>
+          <div class="map-action-row">
+            <button type="button" data-map-quick="land">Jameen / plots</button>
+            <button type="button" data-map-quick="pg">PG</button>
+            <button type="button" data-map-quick="flat">Flats</button>
+            <button type="button" data-map-draw>Draw area</button>
+            <button type="button" data-map-finish hidden>Finish area</button>
+            <button type="button" data-map-clear>Clear</button>
+          </div>
+          <div class="map-search-results" data-map-results>Search any listed property, land, PG, flat, or locality. Use Draw area to inspect a jameen boundary.</div>
+        </div>
         <div id="leaflet-map" class="real-map" aria-label="Interactive property map"></div>
         <div class="map-loading" id="map-loading">Loading free OpenStreetMap map...</div>
       </div>
       <aside class="layer-panel">
+        <div class="map-insight-panel" data-map-insights>
+          <p class="eyebrow">Map Assistant</p>
+          <h3>What are you checking?</h3>
+          <p>Use search for listed inventory. Use draw mode for a land boundary, then check approximate area, nearby listings, and locality confidence signals.</p>
+        </div>
         ${mapLayers.map((layer, index) => `<button class="layer-toggle ${index < 8 ? "active" : ""}" type="button" data-map-layer="${layer}"><span>${layer}</span><span>${index < 8 ? "On" : "Off"}</span></button>`).join("")}
       </aside>
     </section>
@@ -684,6 +742,270 @@ function heatCircle(lat, lng, color, label) {
   }).bindPopup(label);
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function distanceKm(a, b) {
+  const radius = 6371;
+  const toRad = (value) => (value * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * radius * Math.asin(Math.sqrt(h));
+}
+
+function polygonAreaSqm(points) {
+  if (points.length < 3) return 0;
+  const radius = 6378137;
+  const toRad = (value) => (value * Math.PI) / 180;
+  let area = 0;
+  points.forEach((point, index) => {
+    const next = points[(index + 1) % points.length];
+    area += toRad(next.lng - point.lng) * (2 + Math.sin(toRad(point.lat)) + Math.sin(toRad(next.lat)));
+  });
+  return Math.abs((area * radius * radius) / 2);
+}
+
+function propertySearchText(property) {
+  return [
+    property.title,
+    property.city,
+    property.area,
+    property.locality,
+    property.type,
+    property.price,
+    property.amenities,
+    property.listingKind || property.listing_kind,
+    property.landType || property.land_type,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function findMapMatches(query) {
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) return [];
+  const propertyMatches = getProperties()
+    .filter((property) => propertySearchText(property).includes(normalized))
+    .map((property) => ({
+      id: property.id,
+      title: property.title,
+      subtitle: `${property.type} | ${property.price} | ${property.area}, ${property.city}`,
+      kind: "Listed inventory",
+      lat: property.lat,
+      lng: property.lng,
+      property,
+    }));
+
+  const placeMatches = knownMapPlaces
+    .filter((place) => `${place.title} ${place.keywords} ${place.city} ${place.area}`.toLowerCase().includes(normalized))
+    .map((place) => ({
+      id: place.id,
+      title: place.title,
+      subtitle: `${place.type} | ${place.area}, ${place.city}`,
+      kind: "Area intelligence",
+      lat: place.lat,
+      lng: place.lng,
+      place,
+    }));
+
+  return [...propertyMatches, ...placeMatches].slice(0, 8);
+}
+
+function createPropertyMarker(property) {
+  const marker = window.L.marker([property.lat, property.lng])
+    .bindPopup(`<strong>${escapeHtml(property.title)}</strong><br>${escapeHtml(property.price)}<br>${escapeHtml(property.area)}, ${escapeHtml(property.city)}`);
+  activePropertyMarkers.set(property.id, marker);
+  return marker;
+}
+
+function setPropertyLayer(propertiesToShow) {
+  if (!activeMap) return;
+  if (activeLayerGroups.Properties) activeMap.removeLayer(activeLayerGroups.Properties);
+  activePropertyMarkers = new Map();
+  activeLayerGroups.Properties = window.L.layerGroup(propertiesToShow.map(createPropertyMarker)).addTo(activeMap);
+}
+
+function renderMapInsights(title, lines) {
+  const panel = document.querySelector("[data-map-insights]");
+  if (!panel) return;
+  panel.innerHTML = `
+    <p class="eyebrow">Map Assistant</p>
+    <h3>${escapeHtml(title)}</h3>
+    ${lines.map((line) => `<p>${escapeHtml(line)}</p>`).join("")}
+  `;
+}
+
+function renderMapResults(matches, query) {
+  const results = document.querySelector("[data-map-results]");
+  if (!results) return;
+  if (!matches.length) {
+    results.innerHTML = `<strong>No exact listed match.</strong><span>Try city, area, plot, jameen, PG, flat, or draw the area on map for local intelligence.</span>`;
+    renderMapInsights("No exact listed inventory", [`No listing matched "${query}". You can still inspect the area by drawing a boundary or using quick filters.`]);
+    return;
+  }
+
+  results.innerHTML = matches
+    .map((match) => `<button type="button" data-map-result="${escapeHtml(match.id)}"><strong>${escapeHtml(match.title)}</strong><span>${escapeHtml(match.subtitle)}</span></button>`)
+    .join("");
+  renderMapInsights("Search results", [`${matches.length} result(s) found for "${query}". Click any result to focus it on map. Listed inventory has direct property data; area intelligence is an inferred local signal.`]);
+}
+
+function focusMapMatch(match) {
+  if (!activeMap || !match) return;
+  activeMap.setView([match.lat, match.lng], match.property ? 16 : 14);
+  if (match.property) {
+    const marker = activePropertyMarkers.get(match.property.id);
+    if (marker) marker.openPopup();
+    renderMapInsights(match.property.title, [
+      `${match.property.type} | ${match.property.price}`,
+      `${match.property.area}, ${match.property.city}`,
+      `Trust ${match.property.trust}/100, investment ${match.property.investment}/100, status: listed inventory.`,
+    ]);
+    return;
+  }
+  renderMapInsights(match.title, [match.place.note, "This is an area intelligence result. If a seller lists exact land here, it will appear as a property marker."]);
+}
+
+function nearbyProperties(center, radiusKm = 1.5) {
+  return getProperties()
+    .map((property) => ({ property, distance: distanceKm(center, property) }))
+    .filter((item) => item.distance <= radiusKm)
+    .sort((a, b) => a.distance - b.distance);
+}
+
+function startDrawMode() {
+  if (!activeMap || !window.L) return;
+  if (mapDrawState?.layer) activeMap.removeLayer(mapDrawState.layer);
+  if (mapDrawState?.markers) mapDrawState.markers.forEach((marker) => activeMap.removeLayer(marker));
+  mapDrawState = {
+    enabled: true,
+    points: [],
+    layer: window.L.layerGroup().addTo(activeMap),
+    markers: [],
+  };
+  document.querySelector("[data-map-finish]")?.removeAttribute("hidden");
+  renderMapInsights("Draw area mode", ["Click boundary points around the jameen or plot. Use Finish area when done. Minimum 3 points required."]);
+}
+
+function addDrawPoint(latlng) {
+  if (!mapDrawState?.enabled || !activeMap) return;
+  const point = { lat: latlng.lat, lng: latlng.lng };
+  mapDrawState.points.push(point);
+  const marker = window.L.circleMarker([point.lat, point.lng], {
+    radius: 5,
+    color: "#0b7a5a",
+    fillColor: "#0b7a5a",
+    fillOpacity: 0.9,
+  }).addTo(mapDrawState.layer);
+  mapDrawState.markers.push(marker);
+
+  if (mapDrawState.line) mapDrawState.layer.removeLayer(mapDrawState.line);
+  mapDrawState.line = window.L.polyline(mapDrawState.points.map((item) => [item.lat, item.lng]), {
+    color: "#0b7a5a",
+    weight: 3,
+  }).addTo(mapDrawState.layer);
+  renderMapInsights("Drawing boundary", [`${mapDrawState.points.length} point(s) selected. Add at least 3 points, then finish area.`]);
+}
+
+function finishDrawMode() {
+  if (!mapDrawState || mapDrawState.points.length < 3) {
+    renderMapInsights("Need more points", ["Draw at least 3 boundary points to estimate land area."]);
+    return;
+  }
+  if (mapDrawState.line) mapDrawState.layer.removeLayer(mapDrawState.line);
+  const points = mapDrawState.points;
+  const polygon = window.L.polygon(points.map((point) => [point.lat, point.lng]), {
+    color: "#0b7a5a",
+    fillColor: "#0b7a5a",
+    fillOpacity: 0.16,
+    weight: 2,
+  }).addTo(mapDrawState.layer);
+  mapDrawState.polygon = polygon;
+  mapDrawState.enabled = false;
+  document.querySelector("[data-map-finish]")?.setAttribute("hidden", "");
+
+  const areaSqm = polygonAreaSqm(points);
+  const acres = areaSqm / 4046.8564224;
+  const center = points.reduce((acc, point) => ({ lat: acc.lat + point.lat / points.length, lng: acc.lng + point.lng / points.length }), { lat: 0, lng: 0 });
+  const nearby = nearbyProperties(center, 2);
+  polygon.bindPopup(`<strong>Drawn jameen area</strong><br>${areaSqm.toFixed(0)} sq m<br>${acres.toFixed(2)} acres`).openPopup();
+  renderMapInsights("Drawn jameen intelligence", [
+    `Approx area: ${areaSqm.toFixed(0)} sq m (${acres.toFixed(2)} acres).`,
+    nearby.length ? `${nearby.length} listed item(s) found within 2 km. Nearest: ${nearby[0].property.title} (${nearby[0].distance.toFixed(1)} km).` : "No exact listed inventory found within 2 km; this is area intelligence, not a verified listing.",
+    "Check road access, boundary documents, ownership chain, conversion status, and development-plan risk before any deal.",
+  ]);
+}
+
+function clearMapTools() {
+  if (mapDrawState?.layer && activeMap) activeMap.removeLayer(mapDrawState.layer);
+  mapDrawState = null;
+  document.querySelector("[data-map-finish]")?.setAttribute("hidden", "");
+  const results = document.querySelector("[data-map-results]");
+  if (results) results.textContent = "Search any listed property, land, PG, flat, or locality. Use Draw area to inspect a jameen boundary.";
+  setPropertyLayer(getProperties());
+  renderMapInsights("What are you checking?", ["Use search for listed inventory. Use draw mode for a land boundary, then check approximate area, nearby listings, and locality confidence signals."]);
+}
+
+function bindMapTools() {
+  const form = document.querySelector("[data-map-search-form]");
+  const results = document.querySelector("[data-map-results]");
+  form?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const query = new FormData(form).get("q") || "";
+    const matches = findMapMatches(query);
+    renderMapResults(matches, query);
+    if (matches[0]) focusMapMatch(matches[0]);
+  });
+
+  results?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-map-result]");
+    if (!button) return;
+    const query = new FormData(form).get("q") || "";
+    const match = findMapMatches(query).find((item) => item.id === button.dataset.mapResult);
+    focusMapMatch(match);
+  });
+
+  document.querySelectorAll("[data-map-quick]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const term = button.dataset.mapQuick;
+      const aliases = {
+        land: ["land", "plot", "jameen", "agricultural"],
+        pg: ["pg", "co-living", "rental"],
+        flat: ["flat", "apartment", "bhk"],
+      }[term] || [term];
+      const filtered = getProperties().filter((property) => aliases.some((alias) => propertySearchText(property).includes(alias)));
+      setPropertyLayer(filtered.length ? filtered : getProperties());
+      const fallbackPlaces = term === "land" ? findMapMatches("jameen") : findMapMatches(term);
+      renderMapResults(filtered.map((property) => ({
+        id: property.id,
+        title: property.title,
+        subtitle: `${property.type} | ${property.price} | ${property.area}, ${property.city}`,
+        kind: "Listed inventory",
+        lat: property.lat,
+        lng: property.lng,
+        property,
+      })).concat(fallbackPlaces).slice(0, 8), term);
+      renderMapInsights(`${button.textContent} view`, [filtered.length ? `${filtered.length} listed item(s) visible on map.` : "No exact listed item found yet. Showing area intelligence and full inventory until real listings are imported."]);
+    });
+  });
+
+  document.querySelector("[data-map-draw]")?.addEventListener("click", startDrawMode);
+  document.querySelector("[data-map-finish]")?.addEventListener("click", finishDrawMode);
+  document.querySelector("[data-map-clear]")?.addEventListener("click", clearMapTools);
+}
+
 async function initLeafletMap() {
   const container = document.querySelector("#leaflet-map");
   if (!container) return;
@@ -705,16 +1027,7 @@ async function initLeafletMap() {
     }).addTo(activeMap);
 
     const selectedListing = new URLSearchParams(window.location.search).get("listing");
-    let selectedMarker = null;
-    const propertyGroup = L.layerGroup(
-      getProperties().map((property) => {
-        const marker = L.marker([property.lat, property.lng])
-          .bindPopup(`<strong>${property.title}</strong><br>${property.price}<br>${property.area}, ${property.city}`);
-        if (property.id === selectedListing) selectedMarker = marker;
-        return marker;
-      })
-    );
-    activeLayerGroups.Properties = propertyGroup.addTo(activeMap);
+    setPropertyLayer(getProperties());
 
     const colors = {
       Schools: "#2f6fed",
@@ -758,7 +1071,10 @@ async function initLeafletMap() {
       if (group && !activeMap.hasLayer(group)) group.addTo(activeMap);
     });
 
+    activeMap.on("click", (event) => addDrawPoint(event.latlng));
+    bindMapTools();
     if (loading) loading.remove();
+    const selectedMarker = activePropertyMarkers.get(selectedListing);
     if (selectedMarker) {
       activeMap.setView(selectedMarker.getLatLng(), 16);
       selectedMarker.openPopup();

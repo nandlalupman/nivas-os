@@ -1441,6 +1441,8 @@ details p {
 }
 
 .ai-search input,
+.search-console input,
+.search-console select,
 .filter-grid select,
 .chat-panel textarea {
   width: 100%;
@@ -1492,6 +1494,39 @@ details p {
 .filter-grid {
   grid-template-columns: repeat(5, 1fr);
   margin-bottom: 1rem;
+}
+
+.search-console {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1.5fr) repeat(5, minmax(9rem, 1fr));
+  gap: 0.85rem;
+  align-items: end;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.84);
+  padding: 1rem;
+  box-shadow: 0 14px 34px rgba(27, 30, 37, 0.06);
+}
+
+.search-console label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.search-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.search-summary {
+  margin: 1rem 0;
+  color: var(--muted);
+  font-weight: 750;
 }
 
 .board-grid,
@@ -2169,7 +2204,8 @@ details p {
 @media (max-width: 1100px) {
   .module-grid,
   .metric-grid,
-  .filter-grid {
+  .filter-grid,
+  .search-console {
     grid-template-columns: repeat(2, 1fr);
   }
 
@@ -2199,6 +2235,7 @@ details p {
   .metric-grid,
   .score-grid,
   .filter-grid,
+  .search-console,
   .board-grid,
   .checklist-grid,
   .mini-score,

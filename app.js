@@ -76,6 +76,9 @@ const properties = [
   {
     id: "aster-park",
     title: "Aster Park Residences",
+    state: "Karnataka",
+    listingKind: "property",
+    landType: "",
     city: "Bengaluru",
     area: "Whitefield",
     locality: "Kadugodi",
@@ -105,6 +108,9 @@ const properties = [
   {
     id: "indigo-grove",
     title: "Indigo Grove Villas",
+    state: "Karnataka",
+    listingKind: "property",
+    landType: "",
     city: "Bengaluru",
     area: "Sarjapur Road",
     locality: "Dommasandra",
@@ -134,6 +140,9 @@ const properties = [
   {
     id: "metro-nest",
     title: "Metro Nest",
+    state: "Maharashtra",
+    listingKind: "property",
+    landType: "",
     city: "Mumbai",
     area: "Thane West",
     locality: "Majiwada",
@@ -163,6 +172,9 @@ const properties = [
   {
     id: "capital-heights",
     title: "Capital Heights",
+    state: "Delhi NCR",
+    listingKind: "property",
+    landType: "",
     city: "Gurugram",
     area: "Dwarka Expressway",
     locality: "Sector 113",
@@ -189,16 +201,162 @@ const properties = [
     amenities: "Club, pool, concierge, business lounge",
     image: "linear-gradient(135deg, #d7d1c1, #8c9278 40%, #334155)",
   },
+  {
+    id: "vrindavan-plot-yamuna",
+    title: "Vrindavan Yamuna Corridor Plot",
+    state: "Uttar Pradesh",
+    listingKind: "land",
+    landType: "residential",
+    city: "Vrindavan",
+    area: "Chhatikara Road",
+    locality: "Sunrakh Bangar",
+    lat: 27.5758,
+    lng: 77.6558,
+    hierarchy: "India / Uttar Pradesh / Vrindavan / Chhatikara Road / Sunrakh Bangar / Residential Plot",
+    type: "Residential Plot",
+    price: "Indicative INR 38 Lakh",
+    budget: 38,
+    size: "1,350 sq ft",
+    bedrooms: 0,
+    possession: "Immediate",
+    verification: "Area Data Verified",
+    ownerType: "Dealer",
+    score: 74,
+    trust: 62,
+    builder: 0,
+    areaScore: 72,
+    investment: 78,
+    risk: 44,
+    yield: "NA",
+    growth: "High pilgrimage demand",
+    commute: "Near Chhatikara Road",
+    amenities: "Road access, temple corridor demand, boundary verification needed",
+    image: "linear-gradient(135deg, #f3ead8, #8ba888 46%, #415a4c)",
+  },
+  {
+    id: "mathura-pg-dampier",
+    title: "Mathura Dampier Nagar PG",
+    state: "Uttar Pradesh",
+    listingKind: "property",
+    landType: "",
+    city: "Mathura",
+    area: "Dampier Nagar",
+    locality: "Junction Road",
+    lat: 27.4924,
+    lng: 77.6737,
+    hierarchy: "India / Uttar Pradesh / Mathura / Dampier Nagar / Junction Road / PG Inventory",
+    type: "PG / Co-living",
+    price: "Indicative INR 8k/mo",
+    budget: 8,
+    size: "Single and double sharing",
+    bedrooms: 0,
+    possession: "Available now",
+    verification: "Area Data Verified",
+    ownerType: "Operator",
+    score: 71,
+    trust: 58,
+    builder: 0,
+    areaScore: 76,
+    investment: 64,
+    risk: 36,
+    yield: "Rental income",
+    growth: "Stable student and worker demand",
+    commute: "Near station and market",
+    amenities: "Food, wifi, security, operator verification needed",
+    image: "linear-gradient(135deg, #e8eff2, #b8a27d 45%, #314256)",
+  },
+  {
+    id: "bharatpur-ranjeet-nagar-flat",
+    title: "Bharatpur Ranjeet Nagar Flat",
+    state: "Rajasthan",
+    listingKind: "property",
+    landType: "",
+    city: "Bharatpur",
+    area: "Ranjeet Nagar",
+    locality: "Near Saras Circle",
+    lat: 27.2173,
+    lng: 77.4895,
+    hierarchy: "India / Rajasthan / Bharatpur / Ranjeet Nagar / Saras Circle / Flat Inventory",
+    type: "2 BHK Flat",
+    price: "Indicative INR 32 Lakh",
+    budget: 32,
+    size: "980 sq ft",
+    bedrooms: 2,
+    possession: "Ready to move",
+    verification: "Area Data Verified",
+    ownerType: "Owner",
+    score: 73,
+    trust: 61,
+    builder: 0,
+    areaScore: 74,
+    investment: 66,
+    risk: 34,
+    yield: "To be verified",
+    growth: "Medium",
+    commute: "City-center access",
+    amenities: "Parking, market access, document verification needed",
+    image: "linear-gradient(135deg, #ece2cf, #7e9aa1 44%, #354250)",
+  },
+  {
+    id: "bharatpur-nadbai-road-land",
+    title: "Bharatpur Nadbai Road Land",
+    state: "Rajasthan",
+    listingKind: "land",
+    landType: "agricultural",
+    city: "Bharatpur",
+    area: "Nadbai Road",
+    locality: "Outer growth belt",
+    lat: 27.2564,
+    lng: 77.4529,
+    hierarchy: "India / Rajasthan / Bharatpur / Nadbai Road / Outer Growth Belt / Agricultural Land",
+    type: "Agricultural Land",
+    price: "Indicative price on request",
+    budget: 0,
+    size: "Approx 1 bigha",
+    bedrooms: 0,
+    possession: "To be verified",
+    verification: "Area Data Verified",
+    ownerType: "Dealer",
+    score: 68,
+    trust: 54,
+    builder: 0,
+    areaScore: 70,
+    investment: 72,
+    risk: 48,
+    yield: "NA",
+    growth: "Outer road growth potential",
+    commute: "Road access to Bharatpur",
+    amenities: "Road access, khasra and ownership verification required",
+    image: "linear-gradient(135deg, #efe4ca, #8d9b62 45%, #334033)",
+  },
 ];
 
+function inferState(property) {
+  if (property.state) return property.state;
+  const parts = String(property.hierarchy || "").split("/").map((part) => part.trim()).filter(Boolean);
+  if (parts.length > 1) return parts[1];
+  if (property.city === "Mumbai") return "Maharashtra";
+  if (property.city === "Gurugram") return "Delhi NCR";
+  if (property.city === "Bengaluru") return "Karnataka";
+  return "Unknown";
+}
+
 function getProperties() {
-  return liveProperties && liveProperties.length ? liveProperties : properties;
+  const merged = new Map();
+  properties.forEach((property) => merged.set(property.id, property));
+  if (liveProperties && liveProperties.length) {
+    liveProperties.forEach((property) => merged.set(property.id, property));
+  }
+  return [...merged.values()].map((property) => ({ ...property, state: inferState(property) }));
 }
 
 function mapSupabaseProperty(row) {
   return {
     id: row.id,
     title: row.title,
+    state: row.state || inferState(row),
+    listingKind: row.listing_kind || "property",
+    landType: row.land_type || "",
     city: row.city,
     area: row.area,
     locality: row.locality,
@@ -407,6 +565,28 @@ const knownMapPlaces = [
     lng: 73.7389,
     note: "Strong rental-demand and employment-corridor lens for PG, flat, and plot discovery.",
   },
+  {
+    id: "mathura-vrindavan-belt",
+    title: "Mathura Vrindavan property belt",
+    type: "Area intelligence",
+    keywords: "mathura vrindavan uttar pradesh plot jameen land pg flat chhatikara dampier nagar yamuna corridor",
+    city: "Mathura",
+    area: "Mathura Vrindavan Belt",
+    lat: 27.5223,
+    lng: 77.6833,
+    note: "Starter local intelligence for PG, flat, plot, and jameen discovery around Mathura and Vrindavan. Treat price as indicative until verified owner inventory is added.",
+  },
+  {
+    id: "bharatpur-belt",
+    title: "Bharatpur residential and land belt",
+    type: "Area intelligence",
+    keywords: "bharatpur rajasthan ranjeet nagar nadbai road flat plot jameen agricultural land saras circle",
+    city: "Bharatpur",
+    area: "Ranjeet Nagar and Nadbai Road",
+    lat: 27.2173,
+    lng: 77.4895,
+    note: "Starter local intelligence for flats, agricultural land, plots, and outer growth-road inventory around Bharatpur.",
+  },
 ];
 
 let leafletLoadPromise;
@@ -517,26 +697,35 @@ function metricGrid(items) {
   return `<div class="metric-grid">${items.map(([label, value]) => `<article><strong>${value}</strong><span>${label}</span></article>`).join("")}</div>`;
 }
 
+function optionList(values, placeholder) {
+  const unique = [...new Set(values.filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b)));
+  return [`<option value="">${placeholder}</option>`, ...unique.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`)].join("");
+}
+
 function propertyCards(list = getProperties()) {
+  if (!list.length) {
+    return `<div class="empty-state-block"><strong>No matching inventory yet.</strong><p>Try a broader search, open map intelligence, or import real owner/broker/builder inventory from List Property.</p><a class="button small" href="/map/" data-link>Open map</a></div>`;
+  }
   return `<div class="property-grid">${list
     .map(
       (property) => `
         <article class="property-card">
           <div class="property-media" style="--media:${property.image}">
-            <span>${property.verification}</span>
-            <span>Trust ${property.trust}</span>
+            <span>${escapeHtml(property.verification)}</span>
+            <span>Trust ${escapeHtml(property.trust)}</span>
           </div>
           <div class="property-body">
-            <h3>${property.title}</h3>
-            <p>${property.city} / ${property.area} / ${property.locality}</p>
-            <strong>${property.price}</strong>
+            <h3>${escapeHtml(property.title)}</h3>
+            <p>${escapeHtml(property.state)} / ${escapeHtml(property.city)} / ${escapeHtml(property.area)} / ${escapeHtml(property.locality)}</p>
+            <strong>${escapeHtml(property.price)}</strong>
             <div class="mini-score">
-              <span>Property ${property.score}</span>
-              <span>Area ${property.areaScore}</span>
-              <span>Invest ${property.investment}</span>
+              <span>${escapeHtml(property.type)}</span>
+              <span>Area ${escapeHtml(property.areaScore)}</span>
+              <span>Invest ${escapeHtml(property.investment)}</span>
             </div>
             <div class="card-actions">
               <a class="button small" href="/property/aster-park/" data-link>Details</a>
+              <a class="button small ghost" href="/map/?listing=${encodeURIComponent(property.id)}" data-link>Map</a>
               <button class="button small ghost" type="button" data-compare="${property.id}">Compare</button>
             </div>
           </div>
@@ -617,25 +806,71 @@ function landingPage() {
   `;
 }
 
+function filterPropertiesFromForm(form) {
+  const values = Object.fromEntries(new FormData(form).entries());
+  const query = String(values.q || "").trim().toLowerCase();
+  const maxBudget = Number(values.max_budget || 0);
+  return getProperties().filter((property) => {
+    const text = propertySearchText(property);
+    const matchesQuery = !query || text.includes(query);
+    const matchesState = !values.state || property.state === values.state;
+    const matchesCity = !values.city || property.city === values.city;
+    const matchesType = !values.category || text.includes(values.category);
+    const matchesVerification = !values.verification || String(property.verification || "").toLowerCase().includes(values.verification);
+    const matchesBudget = !maxBudget || !Number(property.budget) || Number(property.budget) <= maxBudget;
+    return matchesQuery && matchesState && matchesCity && matchesType && matchesVerification && matchesBudget;
+  });
+}
+
+function searchFormHtml() {
+  const inventory = getProperties();
+  return `
+    <form class="search-console" data-search-form>
+      <label>Search anything<input name="q" type="search" placeholder="Mathura plot, Vrindavan jameen, Bharatpur flat, PG, metro..." /></label>
+      <label>State<select name="state">${optionList(inventory.map((property) => property.state), "All states")}</select></label>
+      <label>City<select name="city">${optionList(inventory.map((property) => property.city), "All cities")}</select></label>
+      <label>Inventory<select name="category">
+        <option value="">Everything</option>
+        <option value="land">Land / Jameen</option>
+        <option value="plot">Plot</option>
+        <option value="pg">PG</option>
+        <option value="flat">Flat</option>
+        <option value="apartment">Apartment</option>
+        <option value="villa">Villa</option>
+        <option value="rental">Rental</option>
+      </select></label>
+      <label>Verification<select name="verification">
+        <option value="">All verification</option>
+        <option value="verified">Verified signals</option>
+        <option value="pending">Pending verification</option>
+      </select></label>
+      <label>Max budget lakh<input name="max_budget" type="number" min="0" placeholder="80" /></label>
+      <div class="search-actions">
+        <button class="button" type="submit">Search inventory</button>
+        <button class="button ghost" type="button" data-search-reset>Reset</button>
+        <button class="button ghost" type="button" data-search-map>Open on map</button>
+      </div>
+    </form>
+  `;
+}
+
 function searchPage() {
+  const inventory = getProperties();
   return `
     ${page("Property Discovery", "Search Experience", "Advanced search across state, city, area, locality, property type, land type, budget, size, bedrooms, amenities, investment potential, rental yield, builder, verification, and possession status.", `<a class="button" href="/map/" data-link>Open map discovery</a>`)}
     <section class="section">
       <div class="section-heading">
         <p class="eyebrow">Property Marketplace</p>
-        <h2>Owners, Brokers, Dealers, Builders, and Developers can list verified inventory.</h2>
+        <h2>Search everything: state, city, area, locality, PG, flat, plot, jameen, rent, buy, and verified signals.</h2>
       </div>
-      <div class="filter-grid">
-        ${["State", "City", "Area", "Locality", "Property Type", "Land Type", "Budget", "Area Size", "Bedrooms", "Amenities", "Investment Potential", "Rental Yield", "Builder", "Verification Status", "Possession Status"]
-          .map((label) => `<label>${label}<select><option>Any ${label}</option><option>Verified only</option></select></label>`)
-          .join("")}
-      </div>
+      ${searchFormHtml()}
       <div class="recommendation-strip">
         ${["Best Match Properties", "Best Investment Properties", "Best Rental Opportunities", "Best Growth Areas", "Best Family Areas", "Best Student Areas", "Best Commercial Opportunities"]
-          .map((item) => `<button type="button">${item}</button>`)
+          .map((item) => `<button type="button" data-search-chip="${item.toLowerCase()}">${item}</button>`)
           .join("")}
       </div>
-      ${propertyCards()}
+      <div class="search-summary" data-search-summary>Showing ${inventory.length} inventory item(s), including starter Mathura, Vrindavan, Bharatpur, Bengaluru, Mumbai, and Gurugram data.</div>
+      <div data-search-results>${propertyCards(inventory)}</div>
     </section>
   `;
 }
@@ -779,6 +1014,7 @@ function polygonAreaSqm(points) {
 function propertySearchText(property) {
   return [
     property.title,
+    property.state,
     property.city,
     property.area,
     property.locality,
@@ -1006,6 +1242,57 @@ function bindMapTools() {
   document.querySelector("[data-map-clear]")?.addEventListener("click", clearMapTools);
 }
 
+function updateSearchResults(form) {
+  const results = filterPropertiesFromForm(form);
+  const target = document.querySelector("[data-search-results]");
+  const summary = document.querySelector("[data-search-summary]");
+  if (target) target.innerHTML = propertyCards(results);
+  if (summary) {
+    const query = new FormData(form).get("q") || "all inventory";
+    summary.textContent = results.length
+      ? `Showing ${results.length} result(s) for ${query}.`
+      : `No listing found for ${query}. Try map search or import owner/broker/builder inventory.`;
+  }
+  return results;
+}
+
+function bindSearchTools() {
+  const form = document.querySelector("[data-search-form]");
+  if (!form) return;
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    updateSearchResults(form);
+  });
+
+  document.querySelector("[data-search-reset]")?.addEventListener("click", () => {
+    form.reset();
+    updateSearchResults(form);
+  });
+
+  document.querySelector("[data-search-map]")?.addEventListener("click", () => {
+    const values = Object.fromEntries(new FormData(form).entries());
+    const query = values.q || values.city || values.state || values.category || "";
+    navigate(`/map/?q=${encodeURIComponent(query)}`);
+  });
+
+  document.querySelectorAll("[data-search-chip]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const text = button.dataset.searchChip || "";
+      const input = form.elements.q;
+      if (text.includes("rental")) input.value = "rental pg";
+      else if (text.includes("investment")) input.value = "plot land";
+      else if (text.includes("growth")) input.value = "growth jameen";
+      else if (text.includes("student")) input.value = "pg";
+      else if (text.includes("commercial")) input.value = "commercial shop office";
+      else input.value = "verified";
+      updateSearchResults(form);
+    });
+  });
+
+  updateSearchResults(form);
+}
+
 async function initLeafletMap() {
   const container = document.querySelector("#leaflet-map");
   if (!container) return;
@@ -1073,6 +1360,14 @@ async function initLeafletMap() {
 
     activeMap.on("click", (event) => addDrawPoint(event.latlng));
     bindMapTools();
+    const initialQuery = new URLSearchParams(window.location.search).get("q");
+    if (initialQuery) {
+      const mapSearchInput = document.querySelector("[data-map-search-form] input");
+      if (mapSearchInput) mapSearchInput.value = initialQuery;
+      const matches = findMapMatches(initialQuery);
+      renderMapResults(matches, initialQuery);
+      if (matches[0]) focusMapMatch(matches[0]);
+    }
     if (loading) loading.remove();
     const selectedMarker = activePropertyMarkers.get(selectedListing);
     if (selectedMarker) {
@@ -1418,6 +1713,9 @@ function renderRoute() {
   app.focus({ preventScroll: true });
   if (current === "/map") {
     initLeafletMap();
+  }
+  if (current === "/search") {
+    bindSearchTools();
   }
   if (current === "/list-property") {
     initListingMapPicker();
